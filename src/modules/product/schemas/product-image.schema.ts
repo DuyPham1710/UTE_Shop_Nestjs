@@ -5,8 +5,8 @@ import { Product } from './product.schema';
 export type ProductImageDocument = HydratedDocument<ProductImage>;
 @Schema({ timestamps: true })
 export class ProductImage {
-  @Prop({ type: Types.ObjectId, ref: Product.name, required: true })
-  product: Product | Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: () => Product })
+  product: Types.ObjectId;
 
   @Prop({ required: true })
   url: string;

@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ProductService } from './product.service';
-import { ProductController } from './product.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ProductSchema } from './schemas/product.schema';
-import { ProductImageSchema } from './schemas/product-image.schema';
-import { ReviewSchema } from './schemas/review.schema';
-import { CategorySchema } from './schemas/category.schema';
 import { UserSchema } from '../user/schemas/user.schema';
+import { ProductController } from './product.controller';
+import { ProductService } from './product.service';
+import { CategorySchema } from './schemas/category.schema';
+import { ProductImageSchema } from './schemas/product-image.schema';
+import { ProductSchema } from './schemas/product.schema';
+import { ReviewSchema } from './schemas/review.schema';
+import { CategoryController } from './category.controller';
+import { CategoryService } from './category.service';
 
 @Module({
   imports: [MongooseModule.forFeature([
@@ -16,7 +18,7 @@ import { UserSchema } from '../user/schemas/user.schema';
     { name: 'Category', schema: CategorySchema },
     { name: 'User', schema: UserSchema}
   ])],
-  controllers: [ProductController],
-  providers: [ProductService],
+  controllers: [ProductController, CategoryController],
+  providers: [ProductService, CategoryService],
 })
 export class ProductModule {}

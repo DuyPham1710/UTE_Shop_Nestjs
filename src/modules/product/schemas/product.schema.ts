@@ -31,7 +31,7 @@ export class Product  {
   views: number;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: ()=> ProductImage }] }) // ()=> ProductImage to avoid circular dependency
-  images: (ProductImage | Types.ObjectId)[];
+  images: Types.ObjectId[];
 
 
   @Prop({ unique: true })

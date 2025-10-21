@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, HydratedDocument, Types } from 'mongoose';
-import { Product } from '../schemas/product.schema';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { User } from 'src/modules/user/schemas/user.schema';
+import { Product } from './product.schema';
 
 export type ReviewDocument = HydratedDocument<Review>;
 @Schema({ timestamps: true })
