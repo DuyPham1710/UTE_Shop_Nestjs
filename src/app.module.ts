@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './config/database.config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MailModule } from './modules/mail/mail.module';
+import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { MailModule } from './modules/mail/mail.module';
     DatabaseModule,
     AuthModule,
     UserModule,
-    MailModule
+    MailModule,
+    ProductModule
   ],
   controllers: [AppController],
   providers: [AppService],
