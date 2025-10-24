@@ -5,6 +5,7 @@ export enum AppEvents {
     USER_FIND_BY_EMAIL = 'user.findByEmail',
     USER_FIND_BY_USERNAME = 'user.findByUsername',
     USER_FIND_ONE = 'user.findOne',
+    USER_FIND_MANY = 'user.findMany',
     USER_CREATE = 'user.create',
     USER_UPDATE = 'user.update',
     USER_UPDATE_REFRESH_TOKEN = 'user.updateRefreshToken',

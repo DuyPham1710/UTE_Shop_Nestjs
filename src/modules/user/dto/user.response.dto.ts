@@ -25,4 +25,7 @@ export default class UserResponseDto {
 
     @Expose()
     username: string;
+
+    @Expose()
+    xu: number;
 }

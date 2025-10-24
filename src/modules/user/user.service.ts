@@ -36,6 +36,15 @@ export class UserService {
         });
     }
 
+    async findMany(userIds: string[]): Promise<UserResponseDto[]> {
+        const objectIds = userIds.map(id => new Types.ObjectId(id));
+        const users = await this.userModel.find({ _id: { $in: objectIds } }).exec();
+
+        return users.map(user => plainToInstance(UserResponseDto, user, {
+            excludeExtraneousValues: true
+        }));
+    }
+
     async create(data: Partial<User>): Promise<UserDocument> {
         const newUser = new this.userModel(data);
         return newUser.save();
@@ -137,5 +146,10 @@ export class UserService {
             }
             return { error: 'User not found' };
         }
+    }
+
+    @OnEvent(AppEvents.USER_FIND_MANY)
+    async handleFindMany({ userIds }: { userIds: string[] }): Promise<UserResponseDto[]> {
+        return this.findMany(userIds);
     }
 }
