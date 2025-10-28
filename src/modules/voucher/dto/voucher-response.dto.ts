@@ -29,10 +29,10 @@ export class VoucherResponseDto {
     isPublic: boolean;
 
     @ApiProperty({ description: 'Ngày tạo' })
-    createdAt: Date;
+    createdAt?: Date;
 
     @ApiProperty({ description: 'Ngày cập nhật' })
-    updatedAt: Date;
+    updatedAt?: Date;
 
     @ApiProperty({ description: 'Số lần đã sử dụng', required: false })
     usedCount?: number;

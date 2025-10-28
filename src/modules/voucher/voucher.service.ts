@@ -9,6 +9,7 @@ import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { QueryVoucherDto } from './dto/query-voucher.dto';
 import { AssignVoucherDto } from './dto/assign-voucher.dto';
+import { PaginatedVoucherResponseDto, VoucherResponseDto } from './dto';
 
 @Injectable()
 export class VoucherService {
@@ -83,11 +84,24 @@ export class VoucherService {
                 startDate: createVoucherDto.startDate || new Date(),
             });
 
-            return {
-                success: true,
-                message: 'Tạo voucher thành công',
-                data: voucher,
+            // Return voucher in correct format
+            const response: VoucherResponseDto = {
+                _id: (voucher as any)._id.toString(),
+                code: voucher.code,
+                type: voucher.type,
+                discountValue: voucher.discountValue,
+                startDate: voucher.startDate,
+                expiryDate: voucher.expiryDate,
+                minOrderValue: voucher.minOrderValue,
+                usageLimit: voucher.usageLimit,
+                isPublic: voucher.isPublic,
+                createdAt: (voucher as any).createdAt || voucher.startDate,
+                updatedAt: (voucher as any).updatedAt || voucher.startDate,
+                usedCount: 0,
+                status: this.getVoucherStatus(voucher),
             };
+
+            return response;
         } catch (error) {
             if (error instanceof BadRequestException || error instanceof ConflictException) {
                 throw error;
@@ -100,7 +114,7 @@ export class VoucherService {
     /**
      * Lấy tất cả vouchers với phân trang và filter
      */
-    async getAllVouchers(query: QueryVoucherDto) {
+    async getAllVouchers(query: QueryVoucherDto): Promise<PaginatedVoucherResponseDto> {
         try {
             const { page = 1, limit = 10, search, type, isPublic, status, sortBy = 'createdAt', sortOrder = 'desc' } = query;
 
@@ -145,7 +159,7 @@ export class VoucherService {
             ]);
 
             // Add status and usedCount to each voucher
-            const vouchersWithStats = await Promise.all(
+            const vouchersWithStats: VoucherResponseDto[] = await Promise.all(
                 vouchers.map(async (voucher) => {
                     const usedCount = await this.userVoucherModel.aggregate([
                         { $match: { voucherId: voucher._id } },
@@ -153,23 +167,30 @@ export class VoucherService {
                     ]);
 
                     return {
-                        ...voucher,
+                        _id: voucher._id.toString(),
+                        code: voucher.code,
+                        type: voucher.type,
+                        discountValue: voucher.discountValue,
+                        startDate: voucher.startDate,
+                        expiryDate: voucher.expiryDate,
+                        minOrderValue: voucher.minOrderValue,
+                        usageLimit: voucher.usageLimit,
+                        isPublic: voucher.isPublic,
                         usedCount: usedCount[0]?.total || 0,
                         status: this.getVoucherStatus(voucher),
                     };
                 })
             );
 
-            return {
-                success: true,
+            const response: PaginatedVoucherResponseDto = {
                 data: vouchersWithStats,
-                pagination: {
-                    total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(total / limit),
-                },
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
             };
+
+            return response;
         } catch (error) {
             console.error('getAllVouchers error:', error);
             throw new InternalServerErrorException('Lỗi khi lấy danh sách voucher');

@@ -39,7 +39,7 @@ export class VoucherController {
   @Get()
   @ApiOperation({ summary: '[ADMIN] Lấy danh sách tất cả vouchers với phân trang và filter' })
   @ApiResponse({ status: 200, description: 'Lấy danh sách voucher thành công', type: PaginatedVoucherResponseDto })
-  getAllVouchers(@Query() query: QueryVoucherDto) {
+  getAllVouchers(@Query() query: QueryVoucherDto): Promise<PaginatedVoucherResponseDto> {
     return this.voucherService.getAllVouchers(query);
   }
 
