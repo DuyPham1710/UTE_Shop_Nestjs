@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { UserModule } from './modules/user/user.module';
-import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './config/database.config';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AuthModule } from './modules/auth/auth.module';
+import { DeliveryAddressModule } from './modules/delivery-address/delivery-address.module';
 import { MailModule } from './modules/mail/mail.module';
+import { OrderModule } from './modules/order/order.module';
 import { ProductModule } from './modules/product/product.module';
+import { UserModule } from './modules/user/user.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
+
 
 @Module({
   imports: [
@@ -19,7 +22,9 @@ import { VoucherModule } from './modules/voucher/voucher.module';
     UserModule,
     MailModule,
     ProductModule,
-    VoucherModule
+    VoucherModule,
+    OrderModule,
+    DeliveryAddressModule
   ],
   controllers: [AppController],
   providers: [AppService],
