@@ -2,11 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order } from './schemas/order.schema';
+import { User } from '../user/schemas/user.schema';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
+    @InjectModel(User.name) private readonly userModel: Model<User>
   ) {}
 
   // === Hàm thay cho AdminOrderService.getOrders() ===
@@ -67,9 +69,23 @@ export class OrdersService {
     return orders;
   }
 
-  async getRevenueStats({ from, to, groupBy = 'day' }: { from?: string; to?: string; groupBy?: string }) {
+ async getRevenueStats({
+    from,
+    to,
+    groupBy = 'day',
+  }: {
+    from?: string;
+    to?: string;
+    groupBy?: string;
+  }) {
     const fromDate = from ? new Date(from) : new Date('1970-01-01');
     const toDate = to ? new Date(to) : new Date();
+
+    console.log('=== 📥 [getRevenueStats] INPUT ===');
+    console.log('From:', from);
+    console.log('To:', to);
+    console.log('GroupBy:', groupBy);
+    console.log('Converted Date Range:', { fromDate, toDate });
 
     let dateFormat: string;
     if (groupBy === 'day') {
@@ -97,10 +113,51 @@ export class OrdersService {
       { $sort: { _id: 1 } },
     ]);
 
-    return stats.map((s) => ({
+    console.log('=== 📊 [getRevenueStats] RAW AGGREGATION RESULT ===');
+    console.table(stats);
+
+    const mappedStats = stats.map((s) => ({
       date: s._id,
       revenue: s.totalRevenue,
       orders: s.count,
+    }));
+
+    console.log('=== ✅ [getRevenueStats] FINAL RESPONSE ===');
+    console.table(mappedStats);
+
+    return mappedStats;
+  }
+   async getNewUsersStats({ from, to, groupBy = 'day' }: { from?: string; to?: string; groupBy?: string }) {
+    const fromDate = from ? new Date(from) : new Date('1970-01-01');
+    const toDate = to ? new Date(to) : new Date();
+
+    let dateFormat: string;
+    if (groupBy === 'day') {
+      dateFormat = '%Y-%m-%d';
+    } else if (groupBy === 'month') {
+      dateFormat = '%Y-%m';
+    } else {
+      throw new BadRequestException("Invalid groupBy. Use 'day' or 'month'.");
+    }
+
+    const stats = await this.userModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: fromDate, $lte: toDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: dateFormat, date: '$createdAt' } },
+          newUsers: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    return stats.map((s) => ({
+      date: s._id,
+      users: s.newUsers,
     }));
   }
 }

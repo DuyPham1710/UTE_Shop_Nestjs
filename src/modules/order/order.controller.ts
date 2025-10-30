@@ -47,4 +47,19 @@ export class OrdersController {
       return res.status(500).json({ success: false, message: err.message });
     }
   }
+
+  
+  @Get('stats/users')
+  async getNewUsers(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('groupBy') groupBy: 'day' | 'month' = 'day',
+  ) {
+    try {
+      const data = await this.ordersService.getNewUsersStats({ from, to, groupBy });
+      return { success: true, data };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  }
 }
