@@ -4,13 +4,13 @@ import { User } from 'src/modules/user/schemas/user.schema';
 
 @Schema({ timestamps: true, collection: 'delivery_addresses' })
 export class DeliveryAddress extends Document {
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false })
   addressName: string;
 
   @Prop({ type: Boolean, default: false })
   defaultAddress: boolean;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false })
   nameBuyer: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })

@@ -11,7 +11,7 @@ import { VoucherResponseDto, PaginatedVoucherResponseDto, VoucherStatsResponseDt
 
 @ApiTags('Vouchers')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('voucher')
 export class VoucherController {
   constructor(private readonly voucherService: VoucherService) { }

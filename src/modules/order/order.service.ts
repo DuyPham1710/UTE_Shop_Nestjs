@@ -1,73 +1,53 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Order } from './schemas/order.schema';
 import { User } from '../user/schemas/user.schema';
+import { Product } from '../product/schemas/product.schema';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
-    @InjectModel(User.name) private readonly userModel: Model<User>
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Product.name) private readonly productModel: Model<Product>,
   ) {}
 
-  // === Hàm thay cho AdminOrderService.getOrders() ===
-  async getOrders({ status, isDelivered }: { status?: string; isDelivered?: boolean }) {
+  
+  async getOrders(query: any) {
     const filter: any = {};
 
-    if (status) {
-      filter.statusOrder = status;
+    console.log(query);
+    // Nếu có truyền status thì lọc theo statusOrder
+    if (query.status) {
+      filter.statusOrder = query.status;
     }
 
-    if (isDelivered !== undefined) {
-      filter.isDelivered = isDelivered;
+    // Nếu có truyền isDelivered thì lọc thêm
+    if (query.isDelivered !== undefined) {
+      // Ép kiểu boolean vì query là string ('true' / 'false')
+      filter.isDelivered = query.isDelivered;
     }
 
-    console.log('Filter:', filter);
+    // Debug check
+    console.log('Order filter:', filter);
 
-    return await this.orderModel
+    return this.orderModel
       .find(filter)
       .sort({ updatedAt: -1 })
-      .populate('user', 'username email');
+      .populate('user', 'username email')
+      .populate({
+        path: 'items.product',
+        select: 'name price discount images slug',
+        populate: { path: 'images', select: 'url alt' },
+      })
+      .populate({
+        path: 'deliveryAddressId',
+        select: 'addressName nameBuyer phoneNumber defaultAddress note',
+      });
   }
 
-  // === Logic chính của route /admin/orders ===
-  async getOrderStatusByAdmin(status?: string) {
-    let query: any = {};
-    if (status) query.status = status;
-    if (query.status === 'delivering') query.isDelivered = false;
-    if (query.status === 'delivered') {
-      query.status = 'delivering';
-      query.isDelivered = true;
-    }
-    if (query.status === 'completed') query.status = 'delivered';
 
-    const orders = await this.getOrders({
-      status: query.status,
-      isDelivered: query.isDelivered,
-    });
-
-    if (!orders || orders.length === 0) return [];
-
-    // Populate thêm sản phẩm và địa chỉ giao hàng
-    await Promise.all(
-      orders.map((order) =>
-        order.populate([
-          {
-            path: 'items.product',
-            select: 'name price discount images slug',
-            populate: { path: 'images', select: 'url alt' },
-          },
-          {
-            path: 'deliveryAddressId',
-            select: 'addressName nameBuyer phoneNumber defaultAddress note',
-          },
-        ]),
-      ),
-    );
-
-    return orders;
-  }
 
  async getRevenueStats({
     from,
@@ -160,4 +140,49 @@ export class OrdersService {
       users: s.newUsers,
     }));
   }
+  async updateOrderStatus(orderId: string, newStatusOrder: Order['statusOrder']) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+
+    const order = await this.orderModel
+      .findById(orderId)
+      .populate('items.product');
+
+    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
+
+    // Nếu admin chọn hủy
+    if (newStatusOrder === 'cancelled' && order.statusOrder !== 'cancelled') {
+      if (order.status === 'paid') {
+        const user = await this.userModel.findById(order.user);
+        if (user) {
+          user.xu = (user.xu || 0) + order.totalPrice + (order.usedXu || 0);
+          await user.save();
+        }
+      }
+
+      // hoàn lại tồn kho
+      await Promise.all(
+        order.items.map((item: any) =>
+          this.productModel.findByIdAndUpdate(item.product._id, {
+            $inc: { quantity: item.quantity },
+          }),
+        ),
+      );
+    }
+
+    // Nếu admin chọn giao hàng
+    if (newStatusOrder === 'delivered') {
+      order.isDelivered = true; // đã giao cho đơn vị vận chuyển
+      order.statusOrder = 'delivering';
+      order.autoUpdate = new Date(Date.now() + 3 * 60 * 1000);
+    } else {
+      order.statusOrder = newStatusOrder;
+    }
+
+    await order.save();
+
+    return { updatedOrder: order, newStatusOrder };
+  }
+
 }
